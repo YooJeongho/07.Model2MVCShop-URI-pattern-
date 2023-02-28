@@ -15,6 +15,7 @@
 		<result property="price" 		column="PRICE" 				jdbcType="INTEGER" />
 		<result property="fileName" 	column="IMAGE_FILE" 		jdbcType="VARCHAR" />
 		<result property="regDate" 		column="REG_DATE" 			jdbcType="DATE" />
+		<result property="proTranCode"	column="tran_code"			jdbcType="CHAR"/>
 	</resultMap>
 	
 	<!-- SQL : INSERT -->
@@ -28,9 +29,9 @@
 	 <!-- SQL : SELECT ONE -->
 	 <select 	id="getProduct"	parameterType="integer"	resultMap="productSelectMap">
 		SELECT
-		prod_no, prod_name, prod_detail, manufacture_day, price, image_file, reg_date
-		FROM product
-		WHERE prod_no = #{value}
+		prod.*, NVL(tran.tran_status_code, 0) AS tran_status_code, NVL(tran.tran_no,0) AS tran_no
+		FROM product prod, transaction tran
+		WHERE prod.prod_no = tran.prod_no(+) AND prod.prod_no = #{prodNo}
 	 </select>
 	 
 	 <!-- SQL : UPDATE -->
@@ -48,26 +49,26 @@
 		 
 	<!-- SQL : SELECT LIST -->
 	<select  id="getProductList"  parameterType="search"	resultMap="productSelectMap">
-	  	SELECT *
+	  	SELECT otb.*, NVL(tran.tran_no,0) AS tran_no, NVL(tran.tran_status_code,0) AS tran_code
 	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
-	  					FROM		(	SELECT prod_name , price , reg_date, prod_no
-											FROM product
-											<if test="searchCondition != null">
-												<where>
-													<if test="searchCondition == 0 and searchKeyword !='' ">
-										 				prod_no LIKE '%'||#{searchKeyword}||'%'
-													</if>
-													<if test="searchCondition == 1 and searchKeyword !='' ">
-										 				prod_name LIKE '%'||#{searchKeyword}||'%'
-													</if>
-													<if test="searchCondition == 2 and searchKeyword !='' ">
-										 				price LIKE '%'||#{searchKeyword}||'%'
-													</if>
-												</where>
+	  					FROM (SELECT *
+								FROM product
+									<if test="searchCondition != null">
+										<where>
+											<if test="searchCondition == 0 and searchKeyword !='' ">
+										 		prod_no LIKE '%'||#{searchKeyword}||'%'
 											</if>
+											<if test="searchCondition == 1 and searchKeyword !='' ">
+										 		prod_name LIKE '%'||#{searchKeyword}||'%'
+											</if>
+											<if test="searchCondition == 2 and searchKeyword !='' ">
+										 		price LIKE '%'||#{searchKeyword}||'%'
+											</if>
+										</where>
+									</if>
 											ORDER BY prod_no ) inner_table
-						WHERE ROWNUM &lt;= #{endRowNum} )
-		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+						WHERE ROWNUM &lt;= #{endRowNum} ) otb, transaction tran
+		WHERE otb.prod_no = tran.prod_no(+) AND row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
 	 </select>
 	 	<!--  위 두번째 subQuery 의  
 	 			WHERE ROWNUM &lt;= #{endRowNum} ) 는
@@ -90,14 +91,15 @@
 								<if test="searchCondition == 0 and searchKeyword !='' ">
 						 			prod_no LIKE '%'||#{searchKeyword}||'%'
 								</if>
-								<if test="searchCondition == 1 and searchKeyword !='' ">
+								<if test="searchCondition == 2 and searchKeyword !='' ">
 						 			prod_name LIKE '%'||#{searchKeyword}||'%'
 								</if>
-								<if test="searchCondition == 2 and searchKeyword !='' ">
+								<if test="searchCondition == 3 and searchKeyword !='' ">
 						 			price LIKE '%'||#{searchKeyword}||'%'
 								</if>
 							</where>
-						</if> ) countTable						
+						</if> 
+						) countTable						
 	 </select>
 	 
 </mapper>
