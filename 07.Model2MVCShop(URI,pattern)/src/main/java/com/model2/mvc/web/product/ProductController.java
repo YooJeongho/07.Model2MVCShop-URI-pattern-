@@ -1,7 +1,9 @@
 package com.model2.mvc.web.product;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -9,13 +11,17 @@ import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.model2.mvc.common.Page;
 import com.model2.mvc.common.Search;
@@ -62,13 +68,33 @@ public class ProductController {
 	
 	//@RequestMapping("/addProduct")
 	@PostMapping("addProduct")
-	public String addProduct( @ModelAttribute("product") Product product ) throws Exception {
+	public String addProduct( @ModelAttribute("product") Product product,
+									@RequestParam("file") MultipartFile file) throws Exception {
 
 		System.out.println("/addUser.do");
-		System.out.println("바뀌기 전 product manudate : "+product.getManuDate());
+		System.out.println("product domain객체에 binding 되었는지 : "+product);
 		String date = product.getManuDate().replaceAll("-", "");
 		product.setManuDate(date);
 		System.out.println(product.toString());
+		
+		// file저장 경로 설정
+		String temDir = "C:\\Users\\Bitcamp\\git\\07.Model2MVCShop(URI,pattern)\\07.Model2MVCShop(URI,pattern)\\src\\main\\webapp\\images\\uploadFiles";
+		
+		if(file != null && file.getSize()>0) {
+			// file의 원래 이름 가져와서 Random한 이름으로 저장
+			UUID uuid = UUID.randomUUID();
+			String originalName = file.getOriginalFilename();
+			System.out.println("originalName : "+originalName);
+			String convertFileName = uuid.toString()+"_"+file.getOriginalFilename();
+			
+			// 저장할 경로 지정 및 저장
+			file.transferTo(new File((temDir)+"\\"+convertFileName));
+			System.out.println("file name: "+convertFileName);
+			
+			product.setFileName(convertFileName);
+		}
+		
+		
 		//Business Logic
 		productService.addProduct(product);
 		
@@ -97,7 +123,7 @@ public class ProductController {
 		// Model 과 View 연결
 		model.addAttribute("product", product);
 		model.addAttribute("menu", menu);
-		
+		//model.addAttribute("filename", product.getFileName());
 		// if문으로 manage type마다 결과값다르게 보내기
 		if(menu.equals("manage")) {
 			return "forward:/product/updateProduct?prodNo="+prodNo;

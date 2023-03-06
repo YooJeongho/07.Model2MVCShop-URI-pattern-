@@ -65,7 +65,9 @@
 	<tr>
 		<td width="104" class="ct_write">상품이미지</td>
 		<td bgcolor="D6D6D6" width="1"></td>
-		<td class="ct_write01">${product.fileName}</td>
+		<td class="ct_write01">
+			<img alt="상품이미지" src="/images/uploadFiles/${product.fileName}">
+		</td>
 	</tr>
 	<tr>
 		<td height="1" colspan="3" bgcolor="D6D6D6"></td>
