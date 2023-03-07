@@ -67,32 +67,75 @@ public class ProductController {
 	}
 	
 	//@RequestMapping("/addProduct")
-	@PostMapping("addProduct")
-	public String addProduct( @ModelAttribute("product") Product product,
-									@RequestParam("file") MultipartFile file) throws Exception {
+//	@PostMapping("addProduct")
+//	public String addProduct( @ModelAttribute("product") Product product,
+//									@RequestParam("file") MultipartFile file) throws Exception {
+//
+//		System.out.println("/addUser.do");
+//		System.out.println("product domain객체에 binding 되었는지 : "+product);
+//		String date = product.getManuDate().replaceAll("-", "");
+//		product.setManuDate(date);
+//		System.out.println(product.toString());
+//		
+//		// file저장 경로 설정
+//		String temDir = "C:\\Users\\Bitcamp\\git\\07.Model2MVCShop(URI,pattern)\\07.Model2MVCShop(URI,pattern)\\src\\main\\webapp\\images\\uploadFiles";
+//		
+//		if(file != null && file.getSize()>0) {
+//			// file의 원래 이름 가져와서 Random한 이름으로 저장
+//			UUID uuid = UUID.randomUUID();
+//			String originalName = file.getOriginalFilename();
+//			System.out.println("originalName : "+originalName);
+//			String convertFileName = uuid.toString()+"_"+file.getOriginalFilename();
+//			
+//			// 저장할 경로 지정 및 저장
+//			file.transferTo(new File((temDir)+"\\"+convertFileName));
+//			System.out.println("file name: "+convertFileName);
+//			
+//			product.setFileName(convertFileName);
+//		}
+		
+	
+		//multi file upload
+		@PostMapping("addProduct")
+		public String addProduct( @ModelAttribute("product") Product product,
+										@RequestParam("file") List<MultipartFile> files) throws Exception {
 
-		System.out.println("/addUser.do");
-		System.out.println("product domain객체에 binding 되었는지 : "+product);
-		String date = product.getManuDate().replaceAll("-", "");
-		product.setManuDate(date);
-		System.out.println(product.toString());
-		
-		// file저장 경로 설정
-		String temDir = "C:\\Users\\Bitcamp\\git\\07.Model2MVCShop(URI,pattern)\\07.Model2MVCShop(URI,pattern)\\src\\main\\webapp\\images\\uploadFiles";
-		
-		if(file != null && file.getSize()>0) {
-			// file의 원래 이름 가져와서 Random한 이름으로 저장
+			System.out.println("/addUser.do");
+			System.out.println("product domain객체에 binding 되었는지 : "+product);
+			String date = product.getManuDate().replaceAll("-", "");
+			product.setManuDate(date);
+			System.out.println(product.toString());
+			
+			// file저장 경로 설정
+			String temDir = "C:\\Users\\Bitcamp\\git\\07.Model2MVCShop(URI,pattern)\\07.Model2MVCShop(URI,pattern)\\src\\main\\webapp\\images\\uploadFiles";
+			String prodTemp = "";
 			UUID uuid = UUID.randomUUID();
-			String originalName = file.getOriginalFilename();
-			System.out.println("originalName : "+originalName);
-			String convertFileName = uuid.toString()+"_"+file.getOriginalFilename();
+			int temp = 1;
+			System.out.println("jsp에서 넘어온 이미지 리스트 : "+files);
 			
-			// 저장할 경로 지정 및 저장
-			file.transferTo(new File((temDir)+"\\"+convertFileName));
-			System.out.println("file name: "+convertFileName);
-			
-			product.setFileName(convertFileName);
-		}
+			if(files != null && files.size() != 0) {
+				
+				
+				for(MultipartFile multi : files) {
+					
+					String originalName = multi.getOriginalFilename();
+					System.out.println("original File name : "+originalName);
+					
+					String convertFileName = uuid.toString()+temp+"_"+originalName;
+					prodTemp= prodTemp+convertFileName+((temp<files.size()) ? "," : "");
+					
+					// 경로에 저장
+					multi.transferTo(new File((temDir)+"\\"+convertFileName));
+					temp++;
+					System.out.println("originalName : "+originalName);
+					System.out.println("convertName : "+convertFileName);
+				}
+				// 저장할 경로 지정 및 저장
+				
+				System.out.println("product domain에 저장할 내용 : "+prodTemp);
+				
+				product.setFileName(prodTemp);
+			}
 		
 		
 		//Business Logic
@@ -119,10 +162,15 @@ public class ProductController {
 		//Business Logic
 		Product product = productService.getProduct(prodNo);
 		System.out.println("select 결과 잘 넘어오는지 : "+product.toString());
+		System.out.println("filename : "+product.getFileName());
+		
+		String[] files = product.getFileName().split("[,]");
+		
 		
 		// Model 과 View 연결
 		model.addAttribute("product", product);
 		model.addAttribute("menu", menu);
+		model.addAttribute("files", files);
 		//model.addAttribute("filename", product.getFileName());
 		// if문으로 manage type마다 결과값다르게 보내기
 		if(menu.equals("manage")) {
